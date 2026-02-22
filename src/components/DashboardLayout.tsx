@@ -1,9 +1,10 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Upload, FileText, BarChart3, Settings, Zap, Bell, LogOut, User, Search } from "lucide-react";
+import { LayoutDashboard, Upload, FileText, BarChart3, Settings, Zap, Bell, LogOut, User, Search, Menu } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { signOut } from "@/lib/supabase-helpers";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,11 +23,34 @@ const notifications = [
   { id: 3, text: "3 new transcripts uploaded", time: "3 hours ago" },
 ];
 
+const SidebarNav = ({ location }: { location: ReturnType<typeof useLocation> }) => (
+  <nav className="flex-1 px-3 space-y-1">
+    {navItems.map((item) => {
+      const active = location.pathname === item.path;
+      return (
+        <Link
+          key={item.path}
+          to={item.path}
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            active
+              ? "bg-sidebar-accent text-sidebar-primary"
+              : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          }`}
+        >
+          <item.icon className="w-5 h-5" />
+          {item.label}
+        </Link>
+      );
+    })}
+  </nav>
+);
+
 const DashboardLayout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const initials = user?.email?.slice(0, 2).toUpperCase() || "U";
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -35,42 +59,46 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <aside className="w-60 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border">
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex w-60 bg-sidebar text-sidebar-foreground flex-col border-r border-sidebar-border">
         <div className="flex items-center gap-2 px-5 py-5">
           <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
             <Zap className="w-4 h-4 text-sidebar-primary-foreground" />
           </div>
           <span className="font-bold text-sidebar-foreground">BRD Agent</span>
         </div>
-        <nav className="flex-1 px-3 space-y-1">
-          {navItems.map((item) => {
-            const active = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-sidebar-accent text-sidebar-primary"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                }`}
-              >
-                <item.icon className="w-5 h-5" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <SidebarNav location={location} />
       </aside>
+
+      {/* Mobile Sidebar Sheet */}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="left" className="w-60 p-0 bg-sidebar text-sidebar-foreground">
+          <div className="flex items-center gap-2 px-5 py-5">
+            <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
+              <Zap className="w-4 h-4 text-sidebar-primary-foreground" />
+            </div>
+            <span className="font-bold text-sidebar-foreground">BRD Agent</span>
+          </div>
+          <SidebarNav location={location} />
+        </SheetContent>
+      </Sheet>
 
       {/* Main */}
       <div className="flex-1 flex flex-col">
         {/* Top bar */}
         <header className="flex items-center justify-between px-6 py-3 border-b border-border bg-background">
-          <div className="relative w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search..." className="pl-10" />
+          <div className="flex items-center gap-3">
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setSheetOpen(true)}
+              className="md:hidden p-2 rounded-lg hover:bg-accent transition-colors"
+            >
+              <Menu className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <div className="relative w-80 hidden sm:block">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Search..." className="pl-10" />
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
