@@ -5,7 +5,8 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: "/sign-up-enhancer/",
+  // DYNAMIC BASE: Use root for Vercel (process.env.VERCEL) and repo path for GitHub Pages
+  base: process.env.VERCEL ? "/" : "/sign-up-enhancer/",
   server: {
     host: "::",
     port: 8080,
